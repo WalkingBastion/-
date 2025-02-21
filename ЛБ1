@@ -1,0 +1,86 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Параметры моделирования
+tc = 1e-3  # Время моделирования 1 мс
+h = 1e-6   # Шаг по времени 1 мкс
+T1 = 1e-5  # Постоянная времени 1
+T2 = 2e-5  # Постоянная времени 2
+A1 = 0.1   # Амплитуда помехи 1
+A2 = 0.3   # Амплитуда помехи 2
+
+# Запрещённые зоны
+Umin1, Umax1 = 1.5, 3.5
+Umin2, Umax2 = 2.0, 4.0
+
+# Временной массив
+time = np.arange(0, tc, h)
+
+# Генерация меандра
+freq1, freq2 = 5e3, 10e3  # Частоты 5 и 10 кГц
+signal1 = (np.sin(2 * np.pi * freq1 * time) > 0).astype(int)
+signal2 = (np.sin(2 * np.pi * freq2 * time) > 0).astype(int)
+
+# Визуализация входного сигнала
+plt.figure(figsize=(10, 6))
+plt.subplot(3, 1, 1)
+plt.plot(time, signal1, label='5 kHz', alpha=0.7)
+plt.plot(time, signal2, label='10 kHz', alpha=0.7)
+plt.title('Входной меандр')
+plt.legend()
+plt.grid()
+
+# Учет емкостной составляющей
+U1, U2 = np.zeros_like(signal1, dtype=float), np.zeros_like(signal2, dtype=float)
+for n in range(1, len(time)):
+    U1[n] = U1[n-1] + h * (signal1[n] - U1[n-1]) / T1
+    U2[n] = U2[n-1] + h * (signal2[n] - U2[n-1]) / T2
+
+plt.subplot(3, 1, 2)
+plt.plot(time, U1, label='5 kHz (сглаж.)')
+plt.plot(time, U2, label='10 kHz (сглаж.)')
+plt.title('Сигнал с учетом ёмкости')
+plt.legend()
+plt.grid()
+
+# Добавление помех
+noise1 = np.random.uniform(-A1, A1, len(time))
+noise2 = np.random.uniform(-A2, A2, len(time))
+U1_noisy, U2_noisy = U1 + noise1, U2 + noise2
+
+plt.subplot(3, 1, 3)
+plt.plot(time, U1_noisy, label='5 kHz (с помехой)')
+plt.plot(time, U2_noisy, label='10 kHz (с помехой)')
+plt.title('Сигнал с помехой')
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.show()
+
+# Определение выхода логического каскада
+out1, out2 = np.zeros_like(U1_noisy), np.zeros_like(U2_noisy)
+for n in range(1, len(time)):
+    # Для первой запрещённой зоны
+    if out1[n-1] == 0 and U1_noisy[n] > Umax1:
+        out1[n] = 1
+    elif out1[n-1] == 1 and U1_noisy[n] < Umin1:
+        out1[n] = 0
+    else:
+        out1[n] = out1[n-1]
+    
+    # Для второй запрещённой зоны
+    if out2[n-1] == 0 and U2_noisy[n] > Umax2:
+        out2[n] = 1
+    elif out2[n-1] == 1 and U2_noisy[n] < Umin2:
+        out2[n] = 0
+    else:
+        out2[n] = out2[n-1]
+
+# Визуализация выходного сигнала
+plt.figure(figsize=(10, 4))
+plt.plot(time, out1, label='Выход 5 kHz')
+plt.plot(time, out2, label='Выход 10 kHz')
+plt.title('Выходной сигнал логического каскада')
+plt.legend()
+plt.grid()
+plt.show()
