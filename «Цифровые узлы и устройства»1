@@ -1,0 +1,42 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Параметры моделирования
+tc = 1e-3  # Время моделирования 1 мс
+h = 1e-6   # Шаг по времени 1 мкс
+frequencies = [10e3, 5e3, 2e3]  # Частоты 10, 5, 2 кГц
+amplitude = 5  # Амплитуда сигнала
+Umin, Umax = 2, 4  # Запрещённая зона
+
+# Временной массив
+time = np.arange(0, tc, h)
+
+# Генерация треугольного сигнала
+signals = [amplitude * (2 * np.abs((time * f) % 1 - 0.5)) for f in frequencies]
+
+# Вычисление выходного сигнала логического каскада
+output_signals = []
+for signal in signals:
+    output = np.zeros_like(signal)
+    for n in range(1, len(signal)):
+        if signal[n] > Umax:
+            output[n] = 5
+        elif signal[n] < Umin:
+            output[n] = 0
+        else:
+            output[n] = output[n-1]
+    output_signals.append(output)
+
+# Визуализация
+plt.figure(figsize=(10, 6))
+for i, (signal, output, f) in enumerate(zip(signals, output_signals, frequencies)):
+    plt.subplot(len(frequencies), 1, i+1)
+    plt.plot(time, signal, label=f'Triangular {f/1e3} kHz')
+    plt.axhline(Umin, color='r', linestyle='--', label='Umin')
+    plt.axhline(Umax, color='r', linestyle='--', label='Umax')
+    plt.plot(time, output, label='Logic Output', linestyle='--')
+    plt.legend()
+    plt.grid()
+
+plt.tight_layout()
+plt.show()
