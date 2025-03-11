@@ -1,0 +1,27 @@
+def priority_encoder(x1, x2, x3, x4):
+    """Функция приоритетного шифратора"""
+    if x1:
+        return 1, 1, 0  # Код 3 (11)
+    elif x2:
+        return 1, 0, 0  # Код 2 (10)
+    elif x3:
+        return 0, 1, 0  # Код 1 (01)
+    elif x4:
+        return 0, 0, 0  # Код 0 (00)
+    else:
+        return 0, 0, 1  # EO = 1, если нет активных сигналов
+
+# Таблица истинности
+inputs = [
+    (0, 0, 0, 0),
+    (0, 0, 0, 1),
+    (0, 0, 1, 0),
+    (0, 1, 0, 0),
+    (1, 0, 0, 0)
+]
+
+print("X1 X2 X3 X4 | A1 A0 EO")
+print("-" * 22)
+for x1, x2, x3, x4 in inputs:
+    a1, a0, eo = priority_encoder(x1, x2, x3, x4)
+    print(f"{x1}  {x2}  {x3}  {x4}  |  {a1}  {a0}  {eo}")
